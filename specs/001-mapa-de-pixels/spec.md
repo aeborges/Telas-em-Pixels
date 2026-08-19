@@ -6,65 +6,67 @@
 
 **Status**: Draft
 
-**Input**: Aplicativo GUI Python que apresenta um mapa de pixels (régua
-10/100 px) em transparência sobre o monitor escolhido, sem bloquear a
-interação com a tela; dica de coordenadas no cursor; geração de PDF do
-monitor inteiro ou de um retângulo definido por dois pontos, com tamanho
-de página e orientação escolhidos pelo usuário.
+**Input**: Aplicativo GUI Python que mostra a coordenada do ponteiro em
+tempo real, gera um mapa de pixels (grade configurável) da região
+definida por dois pontos — digitados ou clicados na tela — e exporta
+PDF do monitor inteiro ou dessa região, com tamanho de página e
+orientação escolhidos pelo usuário. Sem overlay cobrindo o monitor.
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Ver o mapa de pixels no monitor escolhido (Priority: P1)
+### User Story 1 - Ver o mapa de pixels da região definida (Priority: P1)
 
 Quem precisa medir a tela abre o aplicativo, escolhe o monitor (quando
-há mais de um) e vê sobre aquele monitor um mapa transparente no estilo
-régua: marcas inteiras a cada 100 px e frações a cada 10 px. Pode
-continuar clicando e digitando nas janelas de baixo.
+há mais de um) e define uma região — digitando dois pontos ou
+clicando/capturando na tela. O app desenha o mapa de pixels **na própria
+janela**: linhas principais (mais escuras) e secundárias (mais finas e
+claras), com distâncias e cores escolhidas pelo usuário (padrão 100 px
+em #BDBDBD e 10 px em #D6D6D6). Origem (0, 0) no canto superior
+esquerdo daquele monitor.
 
-**Why this priority**: Sem o overlay medidor o restante do produto não
+**Why this priority**: Sem o mapa da região o restante do produto não
 existe. É o MVP.
 
-**Independent Test**: Abrir o app com um ou mais monitores simulados;
-confirmar que o overlay cobre só o monitor selecionado, desenha marcas
-10/100 e, no modo normal, não consome cliques.
+**Independent Test**: Abrir o app, informar dois pontos (ou o monitor
+inteiro) e confirmar que o canvas mostra a grade com os passos e cores
+configurados.
 
 **Acceptance Scenarios**:
 
-1. **Given** um computador com um único monitor, **When** o app inicia
-   com “mostrar mapa” ligado, **Then** o overlay cobre esse monitor e
-   exibe régua/grade 10 px e 100 px com origem (0,0) no canto superior
+1. **Given** um computador com um único monitor, **When** o usuário
+   define a região do monitor inteiro, **Then** o mapa na janela cobre
+   essa resolução e exibe grade com origem (0,0) no canto superior
    esquerdo daquele monitor.
 2. **Given** dois ou mais monitores, **When** o usuário escolhe o
-   monitor N no painel, **Then** o overlay sai do monitor anterior e
-   passa a cobrir apenas o N, com coordenadas locais daquele monitor.
-3. **Given** o mapa visível em modo normal, **When** o usuário clica
-   numa janela que está “abaixo” do overlay, **Then** o clique chega a
-   essa janela (o overlay é atravessável).
+   monitor N no painel, **Then** as coordenadas e o recorte da região
+   passam a ser locais daquele monitor.
+3. **Given** o app aberto, **When** o usuário trabalha em outras
+   janelas, **Then** não há overlay cobrindo a tela — só o painel do
+   app.
 
 ---
 
-### User Story 2 - Coordenada do cursor em tempo real (Priority: P1)
+### User Story 2 - Coordenada do ponteiro em tempo real (Priority: P1)
 
-Enquanto o mapa está ativo, uma dica pequena abaixo do cursor mostra a
-coordenada em pixels do ponto apontado, atualizada continuamente.
+Ao abrir o app, o painel mostra a coordenada em pixels do ponteiro,
+atualizada continuamente (posição global e posição no monitor
+escolhido). Fora desse monitor, indica que está fora.
 
 **Why this priority**: Medir sem saber o (x, y) atual obriga a contar
 marcas à mão. Complementa o MVP.
 
-**Independent Test**: Mover o ponteiro sobre o monitor mapeado e
-observar a dica acompanhar, abaixo do cursor, com x/y locais; fora do
-monitor mapeado a dica indica que está fora.
+**Independent Test**: Mover o ponteiro e observar x/y no painel; fora
+do monitor escolhido o texto indica “fora”.
 
 **Acceptance Scenarios**:
 
-1. **Given** mapa ativo no monitor M, **When** o cursor está sobre M,
-   **Then** a dica abaixo do cursor mostra `x` e `y` inteiros relativos
-   a M, atualizados em tempo real.
-2. **Given** a dica visível, **When** o cursor chega perto da borda
-   inferior/direita, **Then** a dica desloca-se para permanecer
-   visível (não some cortada).
-3. **Given** a dica visível, **When** o usuário clica através dela,
-   **Then** o clique não é engolido pela dica.
+1. **Given** o app aberto com o monitor M selecionado, **When** o
+   cursor está sobre M, **Then** o painel mostra `x` e `y` inteiros
+   globais e locais a M, atualizados em tempo real.
+2. **Given** o ponteiro visível no painel, **When** o cursor sai de M,
+   **Then** o painel indica que está fora do monitor selecionado.
+3. **Given** o ponteiro sobre a região mapeada, **When** o mapa já foi
+   gerado, **Then** um marcador no canvas acompanha a posição local.
 
 ---
 
@@ -91,7 +93,7 @@ abre, declara orientação/tamanho e contém a grade com coordenadas.
    **Then** a página do PDF é retrato e o mapa reescala para caber
    nessa folha.
 3. **Given** opção de incluir captura ligada, **When** o PDF é gerado,
-   **Then** a imagem da tela (sem o overlay) aparece sob a grade.
+   **Then** a imagem da tela aparece sob a grade.
 
 ---
 
@@ -116,12 +118,11 @@ região; Esc cancela a seleção.
 2. **Given** seleção concluída, **When** o PDF é gerado, **Then** as
    marcas da régua usam coordenadas de tela/monitor da região (não
    recomeçam em 0,0 a menos que a região comece na origem).
-3. **Given** o primeiro ponto já clicado, **When** o usuário pressiona
-   Esc, **Then** a seleção é abortada, o overlay volta a ser
-   atravessável e nenhum PDF é gerado.
-4. **Given** modo de seleção, **When** o usuário move o mouse após o
-   primeiro clique, **Then** um retângulo elástico mostra a área que
-   será mapeada.
+3. **Given** o primeiro ponto já capturado, **When** o usuário pressiona
+   Esc, **Then** a seleção é abortada e nenhum PDF é gerado.
+4. **Given** os dois pontos informados (digitados ou capturados),
+   **When** ambos são válidos, **Then** o mapa da região aparece no
+   canvas da janela.
 
 ---
 
@@ -131,12 +132,12 @@ região; Esc cancela a seleção.
   no cabeçalho.
 - Região que atravessa dois monitores: recortada ao monitor ativo (só
   o trecho sobre o monitor escolhido entra no mapa).
-- Cursor fora de qualquer monitor conhecido: dica “fora”.
-- Falha ao gravar PDF (disco, permissão): mensagem no painel, overlay
-  restaurado.
+- Cursor fora do monitor escolhido: painel indica “fora”.
+- Falha ao gravar PDF (disco, permissão): mensagem no painel.
 - Um único monitor: o seletor existe, mas já vem preenchido; não exige
   escolha extra.
-- Desligar “mostrar mapa”: overlay e dica somem; o painel permanece.
+- Região ainda não definida: o canvas mostra um convite a informar os
+  dois pontos; o ponteiro já aparece ao vivo.
 
 ## Requirements *(mandatory)*
 
@@ -144,28 +145,30 @@ região; Esc cancela a seleção.
 
 - **FR-001**: O sistema MUST enumerar os monitores conectados e permitir
   escolher qual recebe o mapa quando houver mais de um.
-- **FR-002**: O sistema MUST desenhar sobre o monitor escolhido um mapa
-  no estilo régua, com marcas a cada 100 px (inteiro) e a cada 10 px
-  (fração), origem no canto superior esquerdo daquele monitor.
-- **FR-003**: O mapa MUST ser visualmente transparente o bastante para
-  ver o conteúdo da tela.
-- **FR-004**: Em modo normal o overlay e a dica MUST deixar passar
-  cliques e interação com as janelas abaixo.
-- **FR-005**: O sistema MUST exibir abaixo do cursor, em tempo real, a
-  coordenada em pixels do ponto apontado (referente ao monitor
-  mapeado).
+- **FR-002**: O sistema MUST desenhar na janela do app um mapa da
+  região definida, com linhas principais e secundárias, origem no canto
+  superior esquerdo daquele monitor.
+- **FR-003**: O usuário MUST poder alterar a distância das linhas
+  principais e das secundárias.
+- **FR-004**: O usuário MUST poder escolher as cores da grade; os tons
+  padrão são #BDBDBD (principais) e #D6D6D6 (secundárias). Linhas
+  principais são mais escuras; secundárias, mais finas e mais claras.
+- **FR-005**: O sistema MUST exibir no painel, ao abrir o app e em
+  tempo real, a coordenada em pixels do ponteiro (global e local ao
+  monitor escolhido).
 - **FR-006**: O usuário MUST poder gerar PDF do monitor inteiro.
 - **FR-007**: O usuário MUST poder definir um retângulo por dois pontos
-  na tela e gerar o PDF só desse trecho.
+  (digitando ou clicando/capturando na tela) e gerar o mapa e o PDF só
+  desse trecho.
 - **FR-008**: O usuário MUST escolher tamanho de página (no mínimo A4,
   A3, A5, Letter, Legal, Tabloid) e orientação Retrato ou Paisagem
   antes de gerar o PDF; o PDF MUST indicar essas escolhas.
-- **FR-009**: Durante a seleção por dois pontos o overlay MAY capturar
-  cliques; ao terminar ou cancelar MUST voltar ao modo atravessável.
+- **FR-009**: Durante a captura por dois pontos o sistema MUST aceitar
+  F8 (posição atual do ponteiro) e clique fora da janela; Esc cancela.
 - **FR-010**: O PDF MUST trazer a grade/régua na escala da região, com
   as coordenadas reais da seleção.
 - **FR-011**: O usuário MUST poder incluir ou não a captura da tela
-  (sem overlay) como fundo do mapa no PDF.
+  como fundo do mapa na janela e no PDF.
 - **FR-012**: A interface MUST estar em português do Brasil.
 
 ### Key Entities
@@ -175,7 +178,8 @@ região; Esc cancela a seleção.
 - **Ponto**: par inteiro (x, y) em pixels.
 - **Retângulo de seleção**: eixo-alinhado definido por dois pontos
   inclusivos.
-- **Especificação da régua**: passo menor (10) e maior (100).
+- **Especificação da régua / estilo da grade**: passo menor e maior
+  (padrão 10 e 100) e cores (padrão #BDBDBD e #D6D6D6).
 - **Opções de PDF**: tamanho de página, orientação, incluir captura.
 - **Mapa**: combinação de régua + região + (opcional) imagem.
 
@@ -183,11 +187,11 @@ região; Esc cancela a seleção.
 
 ### Measurable Outcomes
 
-- **SC-001**: Com o mapa ligado, um clique numa janela coberta pelo
-  overlay é recebido por essa janela (não pelo app), verificável no
-  Windows e, no melhor esforço, em Linux/macOS.
-- **SC-002**: A dica de coordenadas atualiza com latência percebida
-  abaixo de ~50 ms (polling ≤ 33 ms).
+- **SC-001**: Não há janela cobrindo o monitor; cliques nas outras
+  aplicações não são interceptados pelo app, salvo no instante em que
+  o usuário pede para capturar um ponto.
+- **SC-002**: As coordenadas do ponteiro no painel atualizam com
+  latência percebida abaixo de ~50 ms (polling ≤ 33 ms).
 - **SC-003**: PDF gerado abre em leitor comum, página no tamanho e
   orientação pedidos, com régua 10/100 e dimensões da região no
   cabeçalho.
@@ -201,7 +205,7 @@ região; Esc cancela a seleção.
 - Público: quem desenha/interfaceia e precisa medir pixels na tela
   (mesmo perfil da Paleta de Cores Tkinter).
 - Plataforma alvo: Windows em primeiro plano (lançador `.pyw`); Linux e
-  macOS suportados no melhor esforço para overlay atravessável.
+  macOS suportados no melhor esforço (F8 para capturar o ponto).
 - Tkinter é o toolkit GUI, em continuidade com o projeto irmão.
 - Não há backend, conta de usuário nem rede.
 - “Pixels” são os pixels lógicos do espaço do monitor após DPI-aware

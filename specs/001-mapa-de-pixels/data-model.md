@@ -37,11 +37,19 @@ x+largura); `contem_ponto`; `intersecao` (None se vazio).
 
 | Campo | Padrão | Significado |
 |-------|--------|-------------|
-| passo_menor | 10 | frações da régua |
-| passo_maior | 100 | marcas inteiras numeradas |
+| passo_menor | 10 | linhas secundárias (mais finas e claras) |
+| passo_maior | 100 | linhas principais (mais escuras) |
 
 `marcas(inicio, tamanho, passo)` → múltiplos de `passo` em
 `[inicio, inicio+tamanho)`.
+
+## EstiloGrade
+
+| Campo | Padrão | Significado |
+|-------|--------|-------------|
+| passo_menor / passo_maior | 10 / 100 | distâncias da grade |
+| cor_principal | #BDBDBD | cinza 74, linhas principais |
+| cor_secundaria | #D6D6D6 | cinza 84, linhas secundárias |
 
 ## OpcoesPDF
 

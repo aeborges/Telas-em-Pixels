@@ -10,6 +10,7 @@ from PIL import Image
 from telas_em_pixels.dominio.geometria import Retangulo
 from telas_em_pixels.dominio.pagina import pagina_em_pontos
 from telas_em_pixels.dominio.pdf import gerar_mapa_pdf
+from telas_em_pixels.dominio.regua import EstiloGrade
 
 _MEDIA = re.compile(
     rb"/MediaBox\s*\[\s*([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s*\]"
@@ -73,3 +74,21 @@ def test_pdf_com_captura(tmp_path: Path):
     data = dest.read_bytes()
     assert data.startswith(b"%PDF")
     assert dest.stat().st_size > 1500
+
+
+def test_pdf_com_estilo_de_grade(tmp_path: Path):
+    dest = tmp_path / "grade-custom.pdf"
+    gerar_mapa_pdf(
+        dest,
+        Retangulo(0, 0, 200, 100),
+        tamanho_pagina="A5",
+        orientacao="paisagem",
+        estilo=EstiloGrade(
+            passo_menor=20,
+            passo_maior=50,
+            cor_principal="#BDBDBD",
+            cor_secundaria="#D6D6D6",
+        ),
+    )
+    data = dest.read_bytes()
+    assert data.startswith(b"%PDF")
