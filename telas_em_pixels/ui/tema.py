@@ -1,5 +1,10 @@
 """Tokens visuais — mesma família da Paleta de Cores Tkinter."""
 
+from telas_em_pixels.dominio.regua import (
+    COR_PRINCIPAL_PADRAO,
+    COR_SECUNDARIA_PADRAO,
+)
+
 BG_APP = "#F3F4F8"
 BG_TOOLBAR = "#FFFFFF"
 TEXT = "#1E2130"
@@ -10,12 +15,9 @@ ACCENT_SOFT = "#E7E7FC"
 SUCESSO = "#2FAE72"
 PERIGO = "#C0392B"
 
-# Overlay: chroma-key no Windows (pixels exatamente nesta cor somem)
-CHROMA = "#FF00FF"
-COR_GRADE = "#5B5FEF"
-COR_TICK = "#1E2130"
-COR_TICK_CLARO = "#FFFFFF"
-COR_ELASTICO = "#E63946"
+# Grade de pixels: cinza 74 (principal) e cinza 84 (secundária)
+COR_GRADE_PRINCIPAL = COR_PRINCIPAL_PADRAO
+COR_GRADE_SECUNDARIA = COR_SECUNDARIA_PADRAO
 
 FONTE = "Segoe UI"
 

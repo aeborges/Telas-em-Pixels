@@ -1,1 +1,1 @@
-"""Ganchos de sistema operacional (monitores, captura, click-through, DPI)."""
+"""Ganchos de sistema operacional (monitores, captura, ponteiro, DPI)."""

@@ -30,6 +30,12 @@ marcas_no_intervalo(inicio: int, tamanho: int, passo: int) -> list[int]
     Pós: todos os itens são múltiplos de passo
          inicio <= item < inicio + tamanho
          lista crescente, sem duplicatas
+
+EstiloGrade(passo_menor=10, passo_maior=100,
+            cor_principal="#BDBDBD", cor_secundaria="#D6D6D6")
+    Pré: passos ≥ 1; cores hex RRGGBB ou #RRGGBB
+    Pós: cores normalizadas em #RRGGBB maiúsculo
+         .spec → EspecificacaoRegua com os mesmos passos
 ```
 
 ## pagina

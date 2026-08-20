@@ -13,13 +13,11 @@ from reportlab.pdfgen import canvas
 
 from telas_em_pixels.dominio.geometria import Retangulo
 from telas_em_pixels.dominio.pagina import escala_para_caber, pagina_em_pontos
-from telas_em_pixels.dominio.regua import EspecificacaoRegua
+from telas_em_pixels.dominio.regua import EspecificacaoRegua, EstiloGrade
 
 _TEXTO = HexColor("#1E2130")
 _MUDO = HexColor("#6B7086")
 _TICK = HexColor("#2A2E45")
-_GRADE = HexColor("#9AA0F5")
-_GRADE_FINA = HexColor("#D4D6F6")
 
 
 def gerar_mapa_pdf(
@@ -34,6 +32,7 @@ def gerar_mapa_pdf(
     origem_y: int | None = None,
     metadados: dict[str, str] | None = None,
     spec: EspecificacaoRegua | None = None,
+    estilo: EstiloGrade | None = None,
 ) -> Path:
     """Desenha o mapa da região `retangulo` numa única página.
 
@@ -42,7 +41,8 @@ def gerar_mapa_pdf(
     `retangulo.x` / `retangulo.y`.
     """
     destino = Path(destino)
-    spec = spec or EspecificacaoRegua()
+    estilo = estilo or EstiloGrade()
+    spec = spec or estilo.spec
     ox_regiao = retangulo.x if origem_x is None else origem_x
     oy_regiao = retangulo.y if origem_y is None else origem_y
 
@@ -96,6 +96,7 @@ def gerar_mapa_pdf(
     _desenhar_grade(
         c,
         spec=spec,
+        estilo=estilo,
         origem_x=ox_regiao,
         origem_y=oy_regiao,
         largura_px=retangulo.largura,
@@ -178,6 +179,7 @@ def _desenhar_grade(
     c: canvas.Canvas,
     *,
     spec: EspecificacaoRegua,
+    estilo: EstiloGrade,
     origem_x: int,
     origem_y: int,
     largura_px: int,
@@ -209,8 +211,11 @@ def _desenhar_grade(
 
     desenhar_finos = escala * spec.passo_menor >= 2.0
 
+    cor_sec = HexColor(estilo.cor_secundaria)
+    cor_pri = HexColor(estilo.cor_principal)
+
     if desenhar_finos:
-        c.setStrokeColor(_GRADE_FINA)
+        c.setStrokeColor(cor_sec)
         c.setLineWidth(0.25)
         for mx in menores_x:
             if mx in maiores_x:
@@ -223,8 +228,8 @@ def _desenhar_grade(
             py = pdf_y(my)
             c.line(map_x, py, map_x + map_w, py)
 
-    c.setStrokeColor(_GRADE)
-    c.setLineWidth(0.45)
+    c.setStrokeColor(cor_pri)
+    c.setLineWidth(0.7)
     for mx in maiores_x:
         px = pdf_x(mx)
         c.line(px, map_y, px, map_y + map_h)
