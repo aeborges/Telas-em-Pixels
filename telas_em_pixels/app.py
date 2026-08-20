@@ -8,7 +8,7 @@ from tkinter import filedialog, messagebox
 from telas_em_pixels.dominio.geometria import Ponto, Retangulo
 from telas_em_pixels.dominio.pdf import gerar_mapa_pdf
 from telas_em_pixels.plataforma.captura import capturar_retangulo
-from telas_em_pixels.plataforma.dpi import aplicar_dpi_awareness
+from telas_em_pixels.plataforma.dpi import aplicar_dpi_awareness, area_util_tela
 from telas_em_pixels.plataforma.monitores import Monitor, listar_monitores
 from telas_em_pixels.plataforma.ponteiro import (
     botao_esquerdo_pressionado,
@@ -27,10 +27,9 @@ class Aplicativo(tk.Tk):
         aplicar_dpi_awareness()
         super().__init__()
         self.title("Telas em Pixels — mapa de pixels")
-        self.geometry("1100x760")
-        self.minsize(900, 640)
         self.configure(bg=tema.BG_APP)
         self.resizable(True, True)
+        self._aplicar_geometria_inicial()
         try:
             self.attributes("-topmost", True)
         except tk.TclError:
@@ -49,9 +48,12 @@ class Aplicativo(tk.Tk):
             ao_pdf_monitor=self._pdf_monitor,
             ao_pdf_selecao=self._pdf_selecao,
         )
+        self.painel.configure(width=560)
         self.painel.pack(side="left", fill="y")
-        self.mapa = CanvasMapa(self)
-        self.mapa.pack(side="left", fill="both", expand=True, padx=(0, 16), pady=16)
+        self.painel.pack_propagate(False)
+        self.painel.coluna_direita.pack(side="left", fill="both", expand=True)
+        self.mapa = CanvasMapa(self.painel.area_mapa)
+        self.mapa.pack(fill="both", expand=True, padx=(4, 12), pady=(8, 12))
         self.painel.definir_monitores(self.monitores, primario)
 
         self._ultima_selecao: tuple[Retangulo, Retangulo] | None = None
@@ -71,6 +73,26 @@ class Aplicativo(tk.Tk):
     @property
     def monitor(self) -> Monitor:
         return self.monitores[self.indice_monitor]
+
+    def _aplicar_geometria_inicial(self) -> None:
+        """Abre a janela dentro da área útil, sem estourar a tela."""
+        alvo_w, alvo_h = 1280, 680
+        ax, ay, aw, ah = area_util_tela()
+        if aw < 1 or ah < 1:
+            aw = max(int(self.winfo_screenwidth()), alvo_w)
+            ah = max(int(self.winfo_screenheight()), alvo_h)
+            ax, ay = 0, 0
+        margem = 12
+        w = min(alvo_w, max(960, aw - margem))
+        h = min(alvo_h, max(560, ah - margem))
+        w = min(w, aw - margem)
+        h = min(h, ah - margem)
+        x = ax + max(0, (aw - w) // 2)
+        y = ay + max(0, min(16, ah - h))
+        if y + h > ay + ah:
+            y = ay
+        self.geometry(f"{w}x{h}+{x}+{y}")
+        self.minsize(min(960, w), min(560, h))
 
     def _tick_ponteiro(self) -> None:
         try:

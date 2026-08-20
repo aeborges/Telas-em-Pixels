@@ -56,7 +56,11 @@ class PainelControle(tk.Frame):
         self.cor_principal_var = tk.StringVar(value=COR_PRINCIPAL_PADRAO)
         self.cor_secundaria_var = tk.StringVar(value=COR_SECUNDARIA_PADRAO)
 
-        self._montar()
+        self._montar_esquerda()
+        self.coluna_direita = tk.Frame(mestre, bg=tema.BG_APP)
+        self._montar_direita(self.coluna_direita)
+        self.area_mapa = tk.Frame(self.coluna_direita, bg=tema.BG_APP)
+        self.area_mapa.pack(side="top", fill="both", expand=True)
         self._combo.bind(
             "<<ComboboxSelected>>",
             lambda _e: self._emitir_monitor(),
@@ -78,7 +82,7 @@ class PainelControle(tk.Frame):
             var.trace_add("write", lambda *_: self._emitir_mapa())
         self.captura_var.trace_add("write", lambda *_: self._emitir_mapa())
 
-    def _montar(self) -> None:
+    def _montar_esquerda(self) -> None:
         estilo = ttk.Style(self)
         try:
             estilo.theme_use("clam")
@@ -109,69 +113,75 @@ class PainelControle(tk.Frame):
             "Ponteiro.TLabel",
             background=tema.BG_TOOLBAR,
             foreground=tema.TEXT,
-            font=tema.fonte(16, "bold"),
+            font=tema.fonte(14, "bold"),
         )
         estilo.configure("TCheckbutton", background=tema.BG_TOOLBAR)
         estilo.configure(
             "Accent.TButton",
             background=tema.ACCENT,
             foreground="#FFFFFF",
-            padding=8,
+            padding=6,
         )
         estilo.map("Accent.TButton", background=[("active", "#4A4ED9")])
 
-        pad = {"padx": 16, "pady": (12, 4)}
         ttk.Label(self, text="Telas em Pixels", style="Titulo.TLabel").pack(
-            anchor="w", **pad
+            anchor="w", padx=14, pady=(10, 2)
         )
-        ttk.Label(
-            self,
-            text="Coordenadas ao vivo e mapa de pixels da região que você definir.",
-            background=tema.BG_APP,
-            foreground=tema.TEXT_MUTED,
-        ).pack(anchor="w", padx=16, pady=(0, 8))
-
+        self._corpo = self
         self._card_ponteiro()
         self._card_monitor_regiao()
-        self._card_grade()
-        self._card_pdf()
 
         rodape = tk.Frame(self, bg=tema.BG_APP)
-        rodape.pack(fill="x", side="bottom")
+        rodape.pack(side="bottom", fill="x")
         tk.Label(
             rodape,
             textvariable=self.status_var,
             bg=tema.BG_APP,
             fg=tema.TEXT_MUTED,
             font=tema.fonte(8),
-            wraplength=460,
+            wraplength=520,
             justify="left",
             anchor="w",
-        ).pack(fill="x", padx=16, pady=(4, 10))
+        ).pack(fill="x", padx=14, pady=(4, 10))
 
         assert set(ORIENTACOES) == {"retrato", "paisagem"}
 
-    def _card(self) -> ttk.Frame:
+    def _montar_direita(self, pai: tk.Misc) -> None:
+        self._topo_direita = tk.Frame(pai, bg=tema.BG_APP)
+        self._topo_direita.pack(side="top", fill="x", padx=(8, 12), pady=(10, 0))
+        self._corpo = self._topo_direita
+        self._card_grade()
+        self._card_pdf()
+        self._corpo = self
+
+    def _card(self, pai: tk.Misc | None = None, *, lado: str | None = None) -> ttk.Frame:
         borda = tk.Frame(
-            self,
+            pai or self._corpo,
             bg=tema.BG_TOOLBAR,
             highlightbackground=tema.BORDER,
             highlightthickness=1,
         )
-        borda.pack(fill="x", padx=16, pady=4)
-        inner = ttk.Frame(borda, padding=10, style="Card.TFrame")
-        inner.pack(fill="x")
+        if lado:
+            borda.pack(side=lado, fill="both", expand=True, padx=4, pady=0)
+        else:
+            borda.pack(fill="x", padx=14, pady=5)
+        inner = ttk.Frame(borda, padding=8, style="Card.TFrame")
+        inner.pack(fill="both", expand=True)
         return inner
 
     def _card_ponteiro(self) -> None:
         inner = self._card()
-        ttk.Label(inner, text="Ponteiro", style="Card.TLabel").pack(anchor="w")
-        ttk.Label(
-            inner, textvariable=self.ponteiro_var, style="Ponteiro.TLabel"
-        ).pack(anchor="w", pady=(4, 0))
+        ttk.Label(inner, text="Ponteiro", style="Card.TLabel").grid(
+            row=0, column=0, columnspan=4, sticky="w"
+        )
+        ttk.Label(inner, textvariable=self.ponteiro_var, style="Ponteiro.TLabel").grid(
+            row=1, column=0, columnspan=4, sticky="w", pady=(4, 0)
+        )
         ttk.Label(
             inner, textvariable=self.ponteiro_local_var, style="Muted.TLabel"
-        ).pack(anchor="w", pady=(2, 0))
+        ).grid(row=2, column=0, columnspan=4, sticky="w", pady=(2, 0))
+        inner.columnconfigure(0, weight=1)
+        inner.columnconfigure(2, weight=1)
 
     def _card_monitor_regiao(self) -> None:
         inner = self._card()
@@ -182,10 +192,9 @@ class PainelControle(tk.Frame):
             inner,
             textvariable=self.monitor_var,
             state="readonly",
-            width=42,
         )
         self._combo.grid(
-            row=1, column=0, columnspan=4, sticky="ew", pady=(4, 8)
+            row=1, column=0, columnspan=4, sticky="ew", pady=(2, 4)
         )
 
         ttk.Label(inner, text="Ponto A (x, y do monitor)", style="Muted.TLabel").grid(
@@ -206,16 +215,16 @@ class PainelControle(tk.Frame):
         )
 
         self.btn_pt_a = ttk.Button(inner, text="Clicar ponto A")
-        self.btn_pt_a.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+        self.btn_pt_a.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(6, 0))
         self.btn_pt_b = ttk.Button(inner, text="Clicar ponto B")
         self.btn_pt_b.grid(
-            row=4, column=2, columnspan=2, sticky="ew", pady=(8, 0), padx=(12, 0)
+            row=4, column=2, columnspan=2, sticky="ew", pady=(6, 0), padx=(12, 0)
         )
         self.btn_sel = ttk.Button(inner, text="Clicar dois cantos na tela (F8)")
-        self.btn_sel.grid(row=5, column=0, columnspan=4, sticky="ew", pady=(6, 0))
+        self.btn_sel.grid(row=5, column=0, columnspan=2, sticky="ew", pady=(6, 0))
         self.btn_monitor = ttk.Button(inner, text="Usar o monitor inteiro")
         self.btn_monitor.grid(
-            row=6, column=0, columnspan=4, sticky="ew", pady=(6, 0)
+            row=5, column=2, columnspan=2, sticky="ew", pady=(6, 0), padx=(12, 0)
         )
         inner.columnconfigure(0, weight=1)
         inner.columnconfigure(1, weight=1)
@@ -223,16 +232,16 @@ class PainelControle(tk.Frame):
         inner.columnconfigure(3, weight=1)
 
     def _card_grade(self) -> None:
-        inner = self._card()
+        inner = self._card(lado="left")
         ttk.Label(inner, text="Grade de pixels", style="Card.TLabel").grid(
             row=0, column=0, columnspan=4, sticky="w"
         )
         ttk.Label(
             inner, text="Linhas principais (px)", style="Muted.TLabel"
-        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(8, 0))
+        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 0))
         ttk.Label(
             inner, text="Linhas secundárias (px)", style="Muted.TLabel"
-        ).grid(row=1, column=2, columnspan=2, sticky="w", pady=(8, 0), padx=(12, 0))
+        ).grid(row=1, column=2, columnspan=2, sticky="w", pady=(4, 0), padx=(12, 0))
 
         sp_maior = ttk.Spinbox(
             inner,
@@ -242,7 +251,7 @@ class PainelControle(tk.Frame):
             textvariable=self.passo_maior_var,
             width=8,
         )
-        sp_maior.grid(row=2, column=0, columnspan=2, sticky="w", pady=(2, 8))
+        sp_maior.grid(row=2, column=0, columnspan=2, sticky="w", pady=(2, 4))
         sp_menor = ttk.Spinbox(
             inner,
             from_=1,
@@ -252,7 +261,7 @@ class PainelControle(tk.Frame):
             width=8,
         )
         sp_menor.grid(
-            row=2, column=2, columnspan=2, sticky="w", pady=(2, 8), padx=(12, 0)
+            row=2, column=2, columnspan=2, sticky="w", pady=(2, 4), padx=(12, 0)
         )
 
         ttk.Label(inner, text="Cor principal", style="Muted.TLabel").grid(
@@ -272,7 +281,7 @@ class PainelControle(tk.Frame):
             cursor="hand2",
         )
         self.btn_cor_pri.grid(
-            row=4, column=0, columnspan=2, sticky="ew", pady=(2, 6)
+            row=4, column=0, columnspan=2, sticky="ew", pady=(2, 4)
         )
         self.btn_cor_pri.bind(
             "<Button-1>", lambda _e: self._escolher_cor("principal")
@@ -287,7 +296,7 @@ class PainelControle(tk.Frame):
             cursor="hand2",
         )
         self.btn_cor_sec.grid(
-            row=4, column=2, columnspan=2, sticky="ew", pady=(2, 6), padx=(12, 0)
+            row=4, column=2, columnspan=2, sticky="ew", pady=(2, 4), padx=(12, 0)
         )
         self.btn_cor_sec.bind(
             "<Button-1>", lambda _e: self._escolher_cor("secundaria")
@@ -302,12 +311,12 @@ class PainelControle(tk.Frame):
         inner.columnconfigure(2, weight=1)
 
     def _card_pdf(self) -> None:
-        inner = self._card()
+        inner = self._card(lado="left")
         ttk.Label(inner, text="Geração de PDF", style="Card.TLabel").grid(
             row=0, column=0, columnspan=2, sticky="w"
         )
         ttk.Label(inner, text="Tamanho da página", style="Muted.TLabel").grid(
-            row=1, column=0, sticky="w", pady=(8, 0)
+            row=1, column=0, sticky="w", pady=(4, 0)
         )
         ttk.Combobox(
             inner,
@@ -315,10 +324,10 @@ class PainelControle(tk.Frame):
             values=list(TAMANHOS_PAGINA.keys()),
             state="readonly",
             width=12,
-        ).grid(row=2, column=0, sticky="w", pady=(2, 8))
+        ).grid(row=2, column=0, sticky="w", pady=(2, 4))
 
         ttk.Label(inner, text="Orientação", style="Muted.TLabel").grid(
-            row=1, column=1, sticky="w", pady=(8, 0), padx=(16, 0)
+            row=1, column=1, sticky="w", pady=(4, 0), padx=(16, 0)
         )
         oris = ttk.Frame(inner, style="Card.TFrame")
         oris.grid(row=2, column=1, sticky="w", padx=(16, 0))
@@ -346,23 +355,21 @@ class PainelControle(tk.Frame):
             font=tema.fonte(9),
             anchor="w",
         )
-        self.chk_cap.grid(row=3, column=0, columnspan=2, sticky="w", pady=(4, 10))
+        self.chk_cap.grid(row=3, column=0, columnspan=2, sticky="w", pady=(2, 6))
 
         self.btn_pdf = ttk.Button(
-            inner, text="Gerar PDF do monitor inteiro", style="Accent.TButton"
+            inner, text="Gerar PDF do monitor", style="Accent.TButton"
         )
-        self.btn_pdf.grid(row=4, column=0, columnspan=2, sticky="ew", pady=2)
+        self.btn_pdf.grid(row=4, column=0, sticky="ew", pady=2, padx=(0, 4))
         self.btn_pdf_sel = ttk.Button(
             inner, text="Gerar PDF da seleção", state="disabled"
         )
-        self.btn_pdf_sel.grid(
-            row=5, column=0, columnspan=2, sticky="ew", pady=(6, 0)
-        )
+        self.btn_pdf_sel.grid(row=4, column=1, sticky="ew", pady=2)
         inner.columnconfigure(0, weight=1)
         inner.columnconfigure(1, weight=1)
 
     def _entry(self, pai: tk.Misc, var: tk.StringVar) -> ttk.Entry:
-        return ttk.Entry(pai, textvariable=var, width=8)
+        return ttk.Entry(pai, textvariable=var, width=10)
 
     def _escolher_cor(self, qual: str) -> None:
         atual = (
